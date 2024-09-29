@@ -1,0 +1,62 @@
+create database operation_analytics;
+show databases;
+use project;
+
+CREATE TABLE job_datas
+(ds DATE,
+job_id INT NOT NULL,
+actor_id INT NOT NULL,
+event VARCHAR(15) NOT NULL,
+language VARCHAR(15) NOT NULL,
+time_spent INT NOT NULL,
+org CHAR(2)
+);
+
+select * from job_data;
+
+INSERT INTO job_data (ds, job_id, actor_id, event, language, time_spent, org)
+VALUES ('2020-11-30', 21, 1001, 'skip', 'English', 15, 'A'),
+('2020-11-30', 22, 1006, 'transfer', 'Arabic', 25, 'B'),
+('2020-11-29', 23, 1003, 'decision', 'Persian', 20, 'C'),
+('2020-11-28', 23, 1005, 'transfer', 'Persian', 22, 'D'),
+('2020-11-28', 25, 1002, 'decision', 'Hindi', 11, 'B'),
+('2020-11-27', 11, 1007, 'decision', 'French', 104,'D'),
+('2020-11-26', 23, 1004, 'skip', 'Persian', 56, 'A'),
+('2020-11-25', 20, 1003, 'transfer', 'Italian', 45, 'C');
+
+#TASK 1 JOBS REVIEWED OVER TIME
+SELECT 
+    AVG(T) AS 'Average Jobs Reviewed Per Hour',
+    AVG(P) AS 'Average Jobs Reviewed Per Second'
+FROM (
+    SELECT
+        ds, 
+        (COUNT(job_id) * 3600) / SUM(time_spent) AS T,
+        COUNT(job_id) / SUM(time_spent) AS P
+    FROM 
+        job_data
+    WHERE 
+        MONTH(ds) = 11
+    GROUP BY ds
+) AS job_analysis;
+
+
+#TASK 2  THROUGHPUT ANALYSIS
+SELECT ROUND(COUNT(event)/SUM(time_spent),2) AS "weekly throughput" from job_data;
+SELECT ds AS Dates,ROUND(COUNT(event)/SUM(time_spent),2) AS "Daily throughput" FROM job_data
+Group by ds ORDER BY ds;
+
+#TASK 3 LANGUAGE SHARE ANALYSIS
+SELECT language as languages, Round (100 * COUNT(*)/TOTAL,2 ) as percentage,sub.total
+FROM job_data
+CROSS JOIN (SELECT COUNT(*) AS TOTAL from job_data) AS sub
+GROUP BY language,sub.total;
+
+#TASK 4 DUPLICATE ROW DETECTION
+SELECT actor_id,
+    COUNT(*) AS DuplicateCount
+FROM job_data
+GROUP BY actor_id
+HAVING 
+    COUNT(*) > 1;
+  
